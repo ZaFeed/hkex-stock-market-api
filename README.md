@@ -1,62 +1,32 @@
-# HKEX Stock Market API Examples
+# HKEX Symbol Lookup: Turn 700 into HKEX:00700
 
-**港股 HKEX 行情 API 接入示例**
+ZaFeed's Hong Kong catalog identifies Tencent as `HKEX:00700`. The leading zeros are part of the **ZaFeed identifier**. Keep the normalized value as text through spreadsheet imports, database writes and API requests.
 
-For Hong Kong, ZaFeed uses `market=HK`. Keep all five digits in HKEX codes, such as `HKEX:00700` for Tencent and `HKEX:09988` for Alibaba.
+港股接入示例：把自选股里的 `700`、`00700` 或 `HKEX:00700` 归一成 ZaFeed 的港股标的代码，再查是否出现在公开样本中。
 
-Hong Kong stock quotes, HKEX ticker codes, historical OHLC and WebSocket through ZaFeed. This repository contains client examples for the ZaFeed API, with public catalog lookups and authenticated REST requests.
+## Import a mixed watchlist
 
-[ZaFeed 官网](https://www.zafeed.com/) · [API Quick Start](https://www.zafeed.com/docs-guide.html) · [Markets & Pricing](https://www.zafeed.com/pricing.html) · [Symbol Directory](https://www.zafeed.com/symbols.html) · [Trading Calendar](https://www.zafeed.com/calendar.html)
+```bash
+python3 hkex-symbols.py 700 00005 HKEX:09988
+```
 
-## Hong Kong exchanges and ticker symbols · 交易所与标的代码
+Expected identifiers: `HKEX:00700`, `HKEX:00005`, `HKEX:09988`. Each output row includes `inSampleCatalog`. The sample file is a metadata lookup, so a valid code missing from it has no confirmed status. Already-qualified codes from a different exchange, decimals and six-digit inputs fail rather than being silently rewritten.
 
-Market code: `HK`. Public catalog exchange codes: **HKEX**. Time zone: `Asia/Hong_Kong`.
-
-| ZaFeed symbol | Instrument | Currency |
-| --- | --- | --- |
-| `HKEX:00005` | HSBC | HKD |
-| `HKEX:00700` | Tencent | HKD |
-| `HKEX:01810` | Xiaomi | HKD |
-| `HKEX:09988` | Alibaba | HKD |
-
-## Run a public catalog request · 无需 Key 查询标的
-
-| Language | Run |
+| Source | Keep as text in ZaFeed |
 | --- | --- |
-| Python 3 | `python3 market_data.py catalog` |
-| Node.js 22+ | `node market-data.mjs catalog` |
-| Go | `go run market_data.go catalog` |
-| Java 17+ | `java MarketData.java catalog` |
-| cURL | `bash market-data.sh catalog` |
+| Tencent: `700` | `HKEX:00700` |
+| HSBC: `5` | `HKEX:00005` |
+| Xiaomi: `1810` | `HKEX:01810` |
+| Alibaba: `9988` | `HKEX:09988` |
 
-Python, Node.js and Go filter the public response by market. Java and cURL print the full public response. The catalog returns sample symbol metadata.
+## Use the same identifier for the quote
 
-## Connect to quotes, candles and exchange snapshots · 连接行情接口
-
-Set `ZAFEED_HTTP_BASE_URL` to the HTTPS origin assigned for your data service, and `ZAFEED_API_KEY` to a Key for the selected market. The scripts default to `HK` and `HKEX:00700`. Set `ZAFEED_MARKET` and `ZAFEED_SYMBOL` together when switching markets.
+With an active Hong Kong market Key and assigned HTTPS origin:
 
 ```bash
-python3 market_data.py quotes
-node market-data.mjs klines
-go run market_data.go snapshot
-java MarketData.java quotes
-bash market-data.sh klines
+ZAFEED_SYMBOL=HKEX:00700 bash market-data.sh quotes
 ```
 
-- [Stock quotes API](https://www.zafeed.com/docs-quote.html) uses `symbols` for a comma-separated list.
-- [Historical OHLC API](https://www.zafeed.com/docs-kline.html) uses `symbol`, `interval` and `limit`.
-- [Exchange snapshot API](https://www.zafeed.com/docs-exchange.html) can filter by `venue` and returns a pagination cursor when available.
+The request uses `market=HK`. Market Keys and quote access are described in the [quote API docs](https://www.zafeed.com/docs-quote.html). For additional languages, see the [shared quickstart](https://github.com/ZaFeed/stock-market-data-api).
 
-## Subscribe with WebSocket · WebSocket 订阅
-
-Set `ZAFEED_WS_BASE_URL` to your assigned `wss://` origin and use the same market Key.
-
-```bash
-node market-data.mjs stream
-```
-
-The example waits for `welcome`, sends `subscribe`, and reads messages for up to 15 seconds. A subscription acknowledgement can arrive before a quote update. See the [WebSocket protocol](https://www.zafeed.com/docs-ws.html).
-
-**Availability · 接入状态:** The public catalog commands were checked against ZaFeed. Authenticated REST and WebSocket require a provisioned data service endpoint and matching market Key. 实时报价、历史 K 线和推送需要已开通的接口地址及对应市场 Key。
-
-**Support · 技术支持:** [support@zafeed.net](mailto:support@zafeed.net)
+**Why preserve the prefix and zeros?** Normalization is specific to the receiving service. Use the exact identifier from the [ZaFeed HK directory](https://www.zafeed.com/symbols.html?market=hk) for ZaFeed calls. For exchange trading rules and security information, use [HKEX's securities market documentation](https://www.hkex.com.hk/Global/Exchange/FAQ/Securities-Market/Trading?sc_lang=en).
